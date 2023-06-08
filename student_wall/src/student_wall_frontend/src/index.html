@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>Motoko Student Wall</title>
+  <base href="/" />
+  <link rel="icon" href="favicon.ico" />
+  <!-- Bootstrap CSS -->
+  <link type="text/css" rel="stylesheet" href="main.css" />
+  <link type="text/css" rel="stylesheet" href="bootstrap.css" />
+  <link type="text/css" rel="stylesheet" href="/fontawesome/css/all.min.css" />
+  <!-- <script src="sweetalert.min.js"></script> -->
+  <script defer src="alpine.js"></script>
+</head>
+
+<body x-data="{ }">
+  <main>
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="card">
+            <img src="logo2.svg" alt="DFINITY logo" />
+            <br />
+            <br />
+            <form action="#" @submit.prevent="">
+              <template x-if="!!$store.user && !$store.user.isLoggedIn">
+                <button @click="$store.events.login()" 
+                class="btn btn-lg btn-primary d-flex justify-content-center" id="login"><img src="internet-computer-icp-logo.svg" alt="ICP logo" width="50" height="25" />Login</button>
+              </template>
+              <template x-if="!!$store.user && $store.user.isLoggedIn">
+              <button @click="$store.events.logout()" 
+              class="btn btn-lg btn-primary d-flex justify-content-center" id="logout">
+              <img src="internet-computer-icp-logo.svg" alt="ICP logo" width="50" height="25" />Logout</button>
+              </template>
+            </form>
+            <br />
+
+            <form>
+              <button class="btn btn-lg btn-success" id="greet">View Principal ID</button>
+            </form>
+            <br>
+          <div class="card-header">
+            <h4>Write Message
+            </h4>
+          </div>
+
+          <div class="card-body">
+            <form action="#" id="writeForm" method="POST">
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="">Text</label>
+                  <textarea name="Text" id="formText" class="form-control" rows="4"></textarea>
+                </div>
+                <!-- <div class="col-md-12 mb-3">
+                  <label for="">Image</label>
+                  <input id="formImage" type="file" class="form-control" />
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label for="">Video</label>
+                  <input id="formVideo" type="file" class="form-control" />
+                </div> -->
+                <div class="col-md-12 mb-3">
+                  <button type="submit" class="btn btn-primary" id="submit-btn" name="write">Write Message</button>
+                </div>
+              </div>
+            </form>
+            <hr>
+            <section id="table">
+              <div class="col-lg-8 table-responsive mb-5">
+                <table class="table table-light table-borderless table-hover text-center mb-0">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>S/N</th>
+                      <th>All Messages</th>
+                      <th>Uploaded By</th>
+                      <th>Votes</th>
+                      <th>UpVote</th>
+                      <th>DownVote</th>
+                      <th>All Voters</th>
+                      <th>Update</th>
+                      <th>Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody id="output" class="align-middle" x-data="{ messages: !!$store.messages ? $store.messages?.messages : []}">
+                    <template x-for="message in messages">
+                      <tr>
+                        <td x-text="message.messageId"></td>
+                        <td x-text="message.content.Text"></td>
+                        <td x-text="message.creator"></td>
+                        <td x-text="message.vote"></td>
+                        <td><button @click="$store.events.upVote(message.messageId)" class="btn btn-success upvote-message.messageId"><i class="fa-solid fa-chevron-up"></i></button></td>
+                        <td><button @click="$store.events.downVote(message.messageId)" class="btn btn-danger downvote-message.messageId"><i class="fa-solid fa-chevron-down"></i></button></td>
+                        <td><button class="btn btn-secondary" data-toggle="modal" :data-target="'#votersModal' + message.messageId"><i class="fa-solid fa-eye"></i>
+                          </button>
+                          <!-- Button trigger modal -->
+                          <!-- Modal -->
+                          <div class="modal fade" :id="'votersModal' + message.messageId" tabindex="-1" role="dialog"
+                            aria-labelledby="votersModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title" id="votersModalLabel">Voters</h5>
+                                  <button type="button" class="close bg-danger" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <template x-for="voter in message.voters">
+                                  <div x-text="voter" class="modal-body">
+                                </template>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <button class="btn btn-primary float-end" data-toggle="modal" :data-target="'#exampleModal' + message.messageId"><i class="fa-sharp fa-solid fa-pen-to-square"></i></button>
+                          <!-- Button trigger modal -->
+                          <!-- Modal -->
+                          <div class="modal fade" x-data="{ closeBtn: null }" :id="'exampleModal' + message.messageId" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title" id="exampleModalLabel">Update Message</h5>
+                                  <button type="button" class="close bg-danger" data-dismiss="modal" x-init="closeBtn = $el" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  <form action="#" x-data="{ messageText: message.content.Text }" id="updateForm" @submit.prevent='async () => {
+                                    if (messageText.length === 0)
+                                      return
+                                      
+                                    const btn = $event.target.querySelector("button")
+                                    btn.setAttribute("disabled", true);
+                                    await $store.events.updateMessage(message.messageId, messageText)
+
+                                    messageText = ""
+                                    closeBtn.click()
+                                    btn.removeAttribute("disabled");
+
+                                    $store.messages.fetchAll()
+                                  }' method="POST">
+                                    <div class="row">
+                                        <input type="number" name="updateText" id="updateVal" class="form-control" :value="message.messageId" hidden>
+                                      <div class="col-md-12 mb-3">
+                                        <label for="">Text</label>
+                                        <textarea name="Text" id="updateText" class="form-control" rows="4"
+                                        x-model="messageText"></textarea>
+                                      </div>
+                                      <div class="col-md-12 mb-3">
+                                        <button type="submit" class="btn btn-primary" id="update-btn" name="write">
+                                          Update
+                                          Message</button>
+                                      </div>
+                                    </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+            
+                        </td>
+                        <td><button @click="$store.events.deleteMessage(message.messageId)"
+                            class="btn btn-danger delete.messageId"> <i class="fa-solid fa-trash"></i> </button></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- <script src="./main.js"></script> -->
+  <script src="jquery.js"></script>
+  <script src="popper.js"></script>
+  <script src="bootstrap.js"></script>
+  <!-- <script src="/node_modules/sweetalert/dist/sweetalert.min.js"></script> -->
+</body>
+
+</html>
